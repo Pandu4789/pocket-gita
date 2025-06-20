@@ -1,63 +1,66 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Share, SafeAreaView, ScrollView, Dimensions } from 'react-native';
 import { ArrowLeft, ArrowRight, Bookmark as BookmarkIcon, Share2 as ShareIcon } from 'lucide-react-native';
 import { flatShlokas, chapterNames } from './gita_data';
 
+const screenHeight = Dimensions.get('window').height;
+
 const ReadingView = ({ route, navigation, bookmarks = [], setBookmarks = () => {}, setLastRead = () => {} }) => {
   const { initialShloka } = route.params || {};
 
-  const findInitialIndex = () => {
+  const initialIndex = useMemo(() => {
     if (!Array.isArray(flatShlokas) || !initialShloka) return 0;
-    const index = flatShlokas.findIndex(s =>
-      s.chapter_number === initialShloka.chapter_number &&
-      s.shloka_number === initialShloka.shloka_number
+    const index = flatShlokas.findIndex(
+      s => s.chapter_number === initialShloka.chapter_number &&
+           s.shloka_number === initialShloka.shloka_number
     );
     return index > -1 ? index : 0;
-  };
+  }, [initialShloka]);
 
-  const [currentIndex, setCurrentIndex] = useState(findInitialIndex());
-
+  const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const currentShloka = flatShlokas[currentIndex];
 
   useEffect(() => {
-    if (currentShloka) {
-      setLastRead(currentShloka);
-    }
-  }, [currentShloka, setLastRead]);
+    if (currentShloka) setLastRead(currentShloka);
+  }, [currentShloka]);
 
   const handleNavigate = (direction) => {
     if (direction === 'next' && currentIndex < flatShlokas.length - 1) {
-      setCurrentIndex(currentIndex + 1);
+      setCurrentIndex(prev => prev + 1);
     } else if (direction === 'prev' && currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
+      setCurrentIndex(prev => prev - 1);
     }
   };
 
   const handleShare = async () => {
     try {
-      const textToCopy = `శ్లోకం ${currentShloka.chapter_number}.${currentShloka.shloka_number}\n\n` +
-  `${currentShloka.sanskrit_iast}\n\n` +
-  `తెలుగు అనువాదం:\n${currentShloka.telugu_translation_1}\n\n` +
-  `వివరణ:\n${currentShloka.plain_telugu_explanation}`;
-    await Share.share({ message: textToCopy });
+      const textToShare = 
+        `శ్లోకం ${currentShloka.chapter_number}.${currentShloka.shloka_number}\n\n` +
+        `${currentShloka.sanskrit_iast}\n\n` +
+        `📖 తెలుగు అనువాదం:\n${currentShloka.telugu_translation_1}\n\n` +
+        `🧘🏻 వివరణ:\n${currentShloka.plain_telugu_explanation}`;
+      await Share.share({ message: textToShare });
     } catch (error) {
       console.error("Share failed", error);
     }
   };
 
-  const isBookmarked = bookmarks.some(b => b.chapter_number === currentShloka.chapter_number && b.shloka_number === currentShloka.shloka_number);
+  const isBookmarked = bookmarks.some(
+    b => b.chapter_number === currentShloka.chapter_number &&
+         b.shloka_number === currentShloka.shloka_number
+  );
 
   const toggleBookmark = () => {
-    setBookmarks(prev => {
-      if (isBookmarked) {
-        return prev.filter(b => !(b.chapter_number === currentShloka.chapter_number && b.shloka_number === currentShloka.shloka_number));
-      } else {
-        return [...prev, currentShloka];
-      }
-    });
+    setBookmarks(prev =>
+      isBookmarked
+        ? prev.filter(b =>
+            !(b.chapter_number === currentShloka.chapter_number && b.shloka_number === currentShloka.shloka_number)
+          )
+        : [...prev, currentShloka]
+    );
   };
 
-  if (!flatShlokas?.length || !initialShloka?.chapter_number || !initialShloka?.shloka_number || !currentShloka) {
+  if (!flatShlokas?.length || !currentShloka) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.errorContainer}>
@@ -72,22 +75,36 @@ const ReadingView = ({ route, navigation, bookmarks = [], setBookmarks = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <ArrowLeft color="#374151" size={24} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle} numberOfLines={1}>{`Chapter ${currentShloka.chapter_number}: ${chapterNames[currentShloka.chapter_number]}`}</Text>
+        <Text style={styles.headerTitle} numberOfLines={1}>
+          Chapter {currentShloka.chapter_number}: {chapterNames[currentShloka.chapter_number] || 'Untitled'}
+        </Text>
         <View style={{ width: 40 }} />
       </View>
 
+      {/* Main Content */}
       <View style={styles.content}>
         <View style={styles.card}>
           <TouchableOpacity onPress={toggleBookmark} style={styles.bookmarkButton}>
-            <BookmarkIcon color={isBookmarked ? '#D97706' : '#9CA3AF'} size={24} fill={isBookmarked ? '#FEF3C7' : 'none'} />
+            <BookmarkIcon
+              color={isBookmarked ? '#D97706' : '#9CA3AF'}
+              size={24}
+              fill={isBookmarked ? '#FEF3C7' : 'none'}
+            />
           </TouchableOpacity>
 
-          <Text style={styles.verseNumber}>Verse {currentShloka.chapter_number}.{currentShloka.shloka_number}</Text>
-          <ScrollView contentContainerStyle={{ alignItems: 'center', paddingBottom: 60 }}>
+          <Text style={styles.verseNumber}>
+            Verse {currentShloka.chapter_number}.{currentShloka.shloka_number}
+          </Text>
+
+          <ScrollView
+            contentContainerStyle={{ alignItems: 'center', paddingBottom: 60 }}
+            style={{ maxHeight: screenHeight * 0.65 }}
+          >
             <Text style={styles.sanskritText}>{currentShloka.sanskrit_iast}</Text>
             <Text style={styles.translationText}>{currentShloka.telugu_translation_1}</Text>
             <Text style={styles.explanationText}>{currentShloka.plain_telugu_explanation}</Text>
@@ -99,12 +116,21 @@ const ReadingView = ({ route, navigation, bookmarks = [], setBookmarks = () => {
         </View>
       </View>
 
+      {/* Navigation */}
       <View style={styles.navigation}>
-        <TouchableOpacity onPress={() => handleNavigate('prev')} disabled={currentIndex === 0} style={[styles.navButton, currentIndex === 0 && styles.disabledButton]}>
+        <TouchableOpacity
+          onPress={() => handleNavigate('prev')}
+          disabled={currentIndex === 0}
+          style={[styles.navButton, currentIndex === 0 && styles.disabledButton]}
+        >
           <ArrowLeft color="white" />
         </TouchableOpacity>
         <Text style={styles.progressText}>{currentIndex + 1} / {flatShlokas.length}</Text>
-        <TouchableOpacity onPress={() => handleNavigate('next')} disabled={currentIndex === flatShlokas.length - 1} style={[styles.navButton, currentIndex === flatShlokas.length - 1 && styles.disabledButton]}>
+        <TouchableOpacity
+          onPress={() => handleNavigate('next')}
+          disabled={currentIndex === flatShlokas.length - 1}
+          style={[styles.navButton, currentIndex === flatShlokas.length - 1 && styles.disabledButton]}
+        >
           <ArrowRight color="white" />
         </TouchableOpacity>
       </View>
@@ -115,7 +141,7 @@ const ReadingView = ({ route, navigation, bookmarks = [], setBookmarks = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FDF6EC', // soft beige spiritual tone
+    backgroundColor: '#FDF6EC',
   },
   header: {
     flexDirection: 'row',
@@ -134,7 +160,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#5B21B6', // Deep purple spiritual tone
+    color: '#5B21B6',
     flex: 1,
     textAlign: 'center',
     fontFamily: 'serif',
@@ -150,12 +176,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     elevation: 6,
     borderWidth: 1,
-    borderColor: '#EAB308', // golden border
+    borderColor: '#EAB308',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 6,
-    height: '85%',
     position: 'relative',
   },
   verseNumber: {
@@ -247,6 +272,5 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
 });
-
 
 export default ReadingView;
