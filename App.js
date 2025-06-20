@@ -11,14 +11,13 @@ import {
 
 // --- DATA IMPORT ---
 // We now import our data processing functions from the separate helper file.
-// Make sure you've created 'src/data/gita_data.js'.
+// Make sure you have 'gita_data.js' in the same folder or update the path.
 import { getVerseOfTheDay, allChapters } from './gita_data.js';
 
 // --- ICONS ---
 import { Home, BookOpen, Search, Library, Mic2, Settings, Share2 } from 'lucide-react-native';
 
 // --- MOCK DATA for features not in the JSON ---
-// We'll keep this for playlists, meditations, and bookmarks as placeholders.
 const MOCK_DATA = {
   playlists: [
     { id: 1, title: "Overcoming Fear", icon: "🛡️" },
@@ -41,17 +40,14 @@ const MOCK_DATA = {
 // --- SCREEN COMPONENTS ---
 
 const HomeScreen = () => {
-  // Use state to hold the verse of the day, so it can be updated.
   const [verseOfTheDay, setVerseOfTheDay] = useState(null);
 
-  // useEffect runs once when the component mounts to get a random verse.
   useEffect(() => {
     setVerseOfTheDay(getVerseOfTheDay());
   }, []);
 
   const { playlists } = MOCK_DATA;
 
-  // Show a loading text if the verse hasn't been loaded yet.
   if (!verseOfTheDay) {
     return (
       <View style={[styles.screenContainer, {justifyContent: 'center', alignItems: 'center'}]}>
@@ -74,8 +70,18 @@ const HomeScreen = () => {
 
       <View style={[styles.card, styles.verseCard]}>
         <Text style={styles.cardTitle}>Verse of the Day (BG {verseOfTheDay.chapter_number}.{verseOfTheDay.shloka_number})</Text>
-        <Text style={styles.sanskritText}>{verseOfTheDay.sanskrit_devanagari}</Text>
-        <Text style={styles.translationText}>{verseOfTheDay.english_translation}</Text>
+        
+        {/* === START: UPDATED SECTION === */}
+        <Text style={styles.verseHeading}>Sanskrit Slokam</Text>
+        <Text style={styles.sanskritText}>{verseOfTheDay.sanskrit_iast}</Text>
+        
+        <Text style={styles.verseHeading}>Telugu Slokam</Text>
+        <Text style={styles.translationText}>{verseOfTheDay.telugu_translation_1}</Text>
+        
+        <Text style={styles.verseHeading}>అర్థం</Text>
+        <Text style={styles.explanationText}>{verseOfTheDay.plain_telugu_explanation}</Text>
+        {/* === END: UPDATED SECTION === */}
+
         <View style={styles.cardActions}>
             <TouchableOpacity><Text style={styles.linkText}>View Commentary</Text></TouchableOpacity>
             <TouchableOpacity style={styles.iconButton}><Share2 color="#D97706" size={22} /></TouchableOpacity>
@@ -104,7 +110,6 @@ const HomeScreen = () => {
 };
 
 const ReadScreen = () => {
-  // The `allChapters` data is now imported and pre-processed from our helper file.
   return (
     <ScrollView style={styles.screenContainer}>
       <Text style={[styles.appName, { paddingHorizontal: 16, marginBottom: 16}]}>Bhagavad Gita</Text>
@@ -242,7 +247,7 @@ export default function App() {
   );
 }
 
-// --- STYLESHEET ---
+// --- STYLESHEET (This is the correct way for React Native) ---
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFF' },
   screenContainer: { flex: 1, backgroundColor: '#F9FAFB' },
@@ -253,9 +258,28 @@ const styles = StyleSheet.create({
   iconButton: { padding: 8 },
   verseCard: { backgroundColor: '#FFFBEB', borderColor: '#FDE68A', borderWidth: 1, marginTop: 8 },
   cardTitle: { fontFamily: 'serif', fontSize: 18, color: '#92400E', marginBottom: 8 },
+  
+  // === START: NEW STYLES ADDED ===
+  verseHeading: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#A1A1AA', // A muted gray color
+    textTransform: 'uppercase',
+    marginBottom: 4,
+    marginTop: 10,
+  },
+  explanationText: {
+    fontSize: 15,
+    color: '#3F3F46', // Darker gray for readability
+    lineHeight: 22,
+    fontStyle: 'italic',
+    marginTop: 4,
+  },
+  // === END: NEW STYLES ADDED ===
+
   sanskritText: { fontFamily: 'serif', fontSize: 20, color: '#1E3A8A', lineHeight: 32, marginBottom: 12 },
-  translationText: { fontSize: 16, color: '#4A5568', lineHeight: 24, marginBottom: 16 },
-  cardActions: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  translationText: { fontSize: 16, color: '#4A5568', lineHeight: 24, marginBottom: 12 },
+  cardActions: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 },
   linkText: { fontSize: 14, fontWeight: '600', color: '#D97706' },
   sectionTitle: { fontSize: 16, fontWeight: '600', color: '#374151', marginBottom: 4 },
   bodyText: { fontSize: 14, color: '#6B7280' },

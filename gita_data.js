@@ -58,7 +58,8 @@ export const getVerseOfTheDay = () => {
   if (!allShlokas || allShlokas.length === 0) {
     return {
         sanskrit_devanagari: "Data not loaded.",
-        english_translation: "Please check if the JSON file is correctly placed.",
+        telugu_translation_1: "Please check if the JSON file is correctly placed.",
+        plain_telugu_explanation:"Please check if the JSON file is correctly placed.",
         chapter_number: 0,
         shloka_number: 0
     };
