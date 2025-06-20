@@ -1,7 +1,8 @@
+// Load the JSON file statically for offline-first apps (no backend needed)
 import shlokas from './assets/bhagavad_gita_shlokas.json';
 
-// A simple map to get the proper names for the chapters.
-const chapterNames = {
+// Chapter names mapped by number
+export const chapterNames = {
   1: "Arjuna Vishada Yoga",
   2: "Sankhya Yoga",
   3: "Karma Yoga",
@@ -22,48 +23,38 @@ const chapterNames = {
   18: "Moksha Sannyasa Yoga"
 };
 
-
-// --- Process Data for Chapter List ---
-// The original JSON is a flat list of all shlokas.
-// For the "Read" screen, we need to group these shlokas by chapter.
-const chapters = shlokas.reduce((acc, shloka) => {
+// Group shlokas by chapter for easy access
+export const allChapters = shlokas.reduce((acc, shloka) => {
   const chapterNum = shloka.chapter_number;
-  // Find if a chapter object already exists in our accumulator array 'acc'
   let chapter = acc.find(c => c.id === chapterNum);
-  
-  // If the chapter object doesn't exist, create it.
+
   if (!chapter) {
     chapter = {
       id: chapterNum,
-      // Use the chapter name from our map, or a default name.
       title: chapterNames[chapterNum] || `Chapter ${chapterNum}`,
       shlokas: []
     };
     acc.push(chapter);
   }
-  
-  // Add the current shloka to the appropriate chapter
+
   chapter.shlokas.push(shloka);
-  
   return acc;
 }, []);
 
+// Flat list of all shlokas
+export const flatShlokas = shlokas;
 
-// --- Export Processed and Raw Data ---
-export const allShlokas = shlokas;
-export const allChapters = chapters;
-
-// Function to get a random shloka for "Verse of the Day"
+// Get random verse of the day
 export const getVerseOfTheDay = () => {
-  if (!allShlokas || allShlokas.length === 0) {
+  if (!flatShlokas || flatShlokas.length === 0) {
     return {
-        sanskrit_devanagari: "Data not loaded.",
-        telugu_translation_1: "Please check if the JSON file is correctly placed.",
-        plain_telugu_explanation:"Please check if the JSON file is correctly placed.",
-        chapter_number: 0,
-        shloka_number: 0
+      sanskrit_iast: "Data not loaded.",
+      telugu_translation_1: "Please check if the JSON file is correctly placed.",
+      plain_telugu_explanation: "Please check if the JSON file is correctly placed.",
+      chapter_number: 0,
+      shloka_number: 0
     };
   }
-  const randomIndex = Math.floor(Math.random() * allShlokas.length);
-  return allShlokas[randomIndex];
+  const randomIndex = Math.floor(Math.random() * flatShlokas.length);
+  return flatShlokas[randomIndex];
 };
